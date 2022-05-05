@@ -181,6 +181,11 @@ class OpBuilder(ABC):
         return OpBuilder._is_rocm_pytorch
 
     @staticmethod
+    def is_xpu_pytorch():
+        # dummy status
+        return True;
+
+    @staticmethod
     def installed_rocm_version():
         if OpBuilder._rocm_version:
             return OpBuilder._rocm_version
@@ -520,6 +525,23 @@ class OpBuilder(ABC):
 
         return op_module
 
+class SYCLOpBuilder(OpBuilder):
+    def builder(self):
+        # call SYCLExtension
+        from torch.utils.cpp_extension import CUDAExtension
+        if not self.is_rocm_pytorch():
+            assert_no_cuda_mismatch()
+        cuda_ext = CUDAExtension(
+            name=self.absolute_name(),
+            # get sycl_sources and sycl_include_paths
+            sources=self.strip_empty_entries(self.sources()),
+            include_dirs=self.strip_empty_entries(self.include_paths()),
+            libraries=self.strip_empty_entries(self.libraries_args()),
+            extra_compile_args={
+                'cxx': self.strip_empty_entries(self.cxx_args()),
+                'nvcc': self.strip_empty_entries(self.nvcc_args())
+            })
+        return cuda_ext
 
 class CUDAOpBuilder(OpBuilder):
     def compute_capability_args(self, cross_compile_archs=None):

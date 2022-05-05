@@ -164,6 +164,7 @@ for op_name, builder in ALL_OPS.items():
     if op_enabled(op_name) and op_compatible:
         assert torch_available, f"Unable to pre-compile {op_name}, please first install torch"
         install_ops[op_name] = op_enabled(op_name)
+        # SYCL should add some methon to pass check, and ensure op_builder can run at here.
         ext_modules.append(builder.builder())
 
 print(f'Install Ops={install_ops}')
